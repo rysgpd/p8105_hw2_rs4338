@@ -1,0 +1,20 @@
+---
+title: "p8105_hw2_rs4338"
+author: "Rebecca Shyu"
+date: "2024-09-28"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Problem 1
+
+* Cleaning the Dataset
+
+```{r cars}
+summary(cars)
+```
