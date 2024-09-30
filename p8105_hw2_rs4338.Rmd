@@ -5,16 +5,90 @@ date: "2024-09-28"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 ```
 
-## Problem 1
+## Problem 0:
 
-* Cleaning the Dataset
+* Create a public GitHub repo + local R Project: p8105_hw2_rs4338
+* Create a single .Rmd file named p8105_hw2_rs4338.Rmd that renders to github_document
+* Create a subdirectory (data) to store the local data files, and use relative paths to access these data files
+* Submit a link to your repo via Courseworks
+  - https://github.com/rysgpd/p8105_hw2_rs4338
 
-```{r cars}
-summary(cars)
+## Problem 1:
+
+* Reading & Cleaning the Dataset
+  - Before processing, there were 32 variables and 1,868 rows included in the dataset. It looks like each row is an entrance and/or exit to a station, so there can be many rows for a single station. It provides information about the location (longitude/latitude of both entrance/exit and station) and characteristics (ex: ADA accessible, vending, staffing, etc) of the entrance/exit. There are also up to 11 routes that may stop at the station. 
+  - Some data cleaning steps I took were: cleaning names using the `janitor` package,  converted route8 to route11 to `character` when reading in the csv file, selecting the variables outlined in the homework assignment (line, station, name, station latitude / longitude, routes served, entrance type, entry, vending, and ADA compliance) through the `select` function, changed the entry and vending variables from YES/NO to 0/1 from the instructions through the `mutate` function.
+  - The dimensions of the resulting table are 19 variables/columns and 1,868 rows/entrances/exits.
+  - The data is tidy because the columns are variable names not values, each column has multiple variables, and there is only one table.
+
+```{r prob1_readcsv, message=FALSE}
+initial_nyc_transit_df= read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") 
+
+nyc_transit_df = read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+                          col_types = cols(
+                            Route8 = "c",
+                            Route9 = "c",
+                            Route10 = "c",
+                            Route11 = "c",
+                            )
+                          ) %>% 
+  janitor::clean_names() %>% 
+  select(line:entry, vending, ada) %>% 
+  mutate(
+    entry = ifelse(entry == "YES", 1, 0),
+    vending = ifelse(vending == "YES", 1, 0)
+  )
+
+nyc_transit_df
 ```
+
+* Answer the following questions:
+  - There are 465 distinct stations (using the `distinct` function)
+  - There are 84 distinct stations that are ADA-compliant. 
+  - The proportion of station entrances/exits w/o vending that allow entrance is 0.3770492.
+  - Reformatting the data using the `unite` function, there are 
+  
+  How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
+
+
+```{r probl1_questions, collapse = TRUE}
+
+nyc_transit_df %>% 
+  distinct(line, station_name) %>% 
+  count()
+
+nyc_transit_df %>% 
+  distinct(line, station_name, .keep_all = TRUE) %>% 
+  filter(ada == TRUE) %>% 
+  count()
+
+no_vending_num = 
+  nyc_transit_df %>% 
+  filter(
+    vending == 0
+    ) %>% 
+  count()
+
+no_vending_yes_entry =
+  nyc_transit_df %>% 
+  filter(
+    vending == 0,
+    entry == 1
+  ) %>% 
+  count()
+
+no_vending_yes_entry/no_vending_num
+
+    
+```
+
+```{r }
+
+```
+
