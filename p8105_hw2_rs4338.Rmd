@@ -50,24 +50,24 @@ nyc_transit_df
 ```
 
 * Answer the following questions:
-  - There are 465 distinct stations (using the `distinct` function)
-  - There are 84 distinct stations that are ADA-compliant. 
-  - The proportion of station entrances/exits w/o vending that allow entrance is 0.3770492.
+  - There are `r nyc_transit_df %>% distinct(line, station_name) %>% count()` distinct stations (using the `distinct` function)
+  - There are `r nyc_transit_df %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(ada == TRUE) %>% count()` distinct stations that are ADA-compliant. 
+  - The proportion of station entrances/exits w/o vending that allow entrance is `r (nyc_transit_df %>% filter(vending == 0, entry == 1) %>% count()) / (nyc_transit_df %>% filter(vending == 0) %>% count())`
   - Reformatting the data using the `unite` function, there are 
   
   How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
 
 
-```{r probl1_questions, collapse = TRUE}
+```{r probl1_questions, eval = FALSE}
 
 nyc_transit_df %>% 
   distinct(line, station_name) %>% 
-  count()
+  count() #465
 
 nyc_transit_df %>% 
   distinct(line, station_name, .keep_all = TRUE) %>% 
   filter(ada == TRUE) %>% 
-  count()
+  count() #84
 
 no_vending_num = 
   nyc_transit_df %>% 
@@ -85,21 +85,15 @@ no_vending_yes_entry =
   count()
 
 no_vending_yes_entry/no_vending_num
-
+# 0.3770492	
     
 ```
 
 ## Problem 2:
 
-* Read and clean the Mr. Trash Wheel datasets to produce a single tidy dataset (trash_df)
-* The final tidy dataset is comprised of 845 total observations with 584 from Mr. Trash Wheel, 106 from Professor Trash Wheel, and 155 from Gwynnda. The data spanned from 2014 to 2023 and included specific dates that the trash was collected. The dataset also includes the weight (tons) that ranged from 0.61 to 5.62, volume (cubic yards) that ranged from 5 to 20, and the number of pollutant objects found. These included plastic bottles, polystyrene, cigarette butts, glass bottles, plastic bags, wrappers, and sports balls. Almost all of the objects were counted for each dumpster check, except there were 156 missing for glass bottles, 118 for wrappers, and 261 for sports balls. The object with the largest mean among all dumpsters was cigarette butts at 15,592. The dataset also calculated the estimated number of homes powered by the collected trash.
-* The total weight of trash collected by Professor Trash Wheel was 1875.1	tons.
-* The total number of cigarette butts collected by Gwynnda in June 2022 was 18,120.
 
-
-```{r prob2, collapse=TRUE}
-
-mr_trash_df = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", range="A2:N586") %>% 
+```{r trash_prob2, collapse = TRUE}
+mr_trash_df = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", range="A2:N653") %>% 
   janitor::clean_names() %>% 
   mutate(
     sports_balls = round(sports_balls, digits = 0),
@@ -108,13 +102,13 @@ mr_trash_df = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet =
     wheel = "mr_trash"
   )
 
-prof_trash_df = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", range="A2:M108") %>% 
+prof_trash_df = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Professor Trash Wheel", range="A2:M120") %>% 
   janitor::clean_names() %>% 
   mutate(
     wheel = "prof_trash"
   )
 
-gwynnda_df = read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel", range="A2:L157") %>% 
+gwynnda_df = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Gwynnda Trash Wheel", range="A2:L265") %>% 
   janitor::clean_names()%>% 
   mutate(
     wheel = "gwynnda"
@@ -140,6 +134,11 @@ trash_df %>%
   ) %>% 
   summarise(sum(cigarette_butts, na.rm=TRUE))
 ```
+
+* Read and clean the Mr. Trash Wheel datasets to produce a single tidy dataset (trash_df)
+* The final tidy dataset is comprised of 1032 total observations with 651 from Mr. Trash Wheel, 118 from Professor Trash Wheel, and 263 from Gwynnda. The data spanned from 2014 to 2024 and included specific dates that the trash was collected. The dataset also includes the weight (tons) that ranged from 0.61 to 5.62, volume (cubic yards) that ranged from 5 to 20, and the number of pollutant objects found. These included plastic bottles, polystyrene, cigarette butts, glass bottles, plastic bags, wrappers, and sports balls. Almost all of the objects were counted for each dumpster check, except there were 264 missing for glass bottles, 118 for wrappers, and 381 for sports balls. The object with the largest mean among all dumpsters was cigarette butts at 13,296. The dataset also calculated the estimated number of homes powered by the collected trash.
+* The total weight of trash collected by Professor Trash Wheel was `r trash_df %>% filter(wheel == "mr_trash") %>% summarise(sum(weight_tons, na.rm=TRUE))` tons.
+* The total number of cigarette butts collected by Gwynnda in June 2022 was `r trash_df %>% filter(wheel == "gwynnda",year == 2022,month == "June") %>% summarise(sum(cigarette_butts, na.rm=TRUE))`.
 
 ## Problem 3:
 
