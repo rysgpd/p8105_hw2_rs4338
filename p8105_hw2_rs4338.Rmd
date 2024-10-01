@@ -143,4 +143,22 @@ trash_df %>%
 
 ## Problem 3:
 
+```{r prob3}
+
+gbbo_bakers = read_csv("data/gbb_datasets/bakers.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(baker_name, c("baker_first_name", "baker_last_name"), sep=" ")
+
+gbbo_bakes = read_csv("data/gbb_datasets/bakes.csv",
+                      na=c("N/A", "NA", "UNKNOWN","", "Unknown")) %>% 
+  janitor::clean_names()
+
+gbbo_results = read_csv("data/gbb_datasets/results.csv",
+                        skip = 2) %>% 
+  janitor::clean_names()
+
+gbbo_viewers = read_csv("data/gbb_datasets/viewers.csv") %>% 
+  janitor::clean_names()
+
+```
 
