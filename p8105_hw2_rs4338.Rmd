@@ -92,7 +92,7 @@ no_vending_yes_entry/no_vending_num
 ## Problem 2:
 
 
-```{r trash_prob2, collapse = TRUE}
+```{r trash_prob2, collapse = TRUE, message=FALSE}
 mr_trash_df = read_excel("data/202409 Trash Wheel Collection Data.xlsx", sheet = "Mr. Trash Wheel", range="A2:N653") %>% 
   janitor::clean_names() %>% 
   mutate(
@@ -144,20 +144,78 @@ trash_df %>%
 
 ```{r prob3}
 
-gbbo_bakers = read_csv("data/gbb_datasets/bakers.csv") %>% 
+gbbo_bakers = read_csv("data/gbb_datasets/bakers.csv", show_col_types = FALSE) %>% 
   janitor::clean_names() %>% 
-  separate(baker_name, c("baker_first_name", "baker_last_name"), sep=" ")
+  separate(baker_name, c("baker", "baker_last_name"), sep=" ")
 
 gbbo_bakes = read_csv("data/gbb_datasets/bakes.csv",
-                      na=c("N/A", "NA", "UNKNOWN","", "Unknown")) %>% 
-  janitor::clean_names()
+                      na=c("N/A", "NA", "UNKNOWN","", "Unknown"), show_col_types = FALSE) %>% 
+  janitor::clean_names() %>%
+  mutate(
+    baker = replace(baker, baker == '"Jo"', "Jo")
+  )
 
 gbbo_results = read_csv("data/gbb_datasets/results.csv",
-                        skip = 2) %>% 
+                        skip = 2, show_col_types = FALSE) %>% 
+  janitor::clean_names() %>%
+  mutate(
+    baker = replace(baker, baker == "Joanne", "Jo")
+  )
+
+gbbo_viewers = read_csv("data/gbb_datasets/viewers.csv", show_col_types = FALSE) %>% 
   janitor::clean_names()
 
-gbbo_viewers = read_csv("data/gbb_datasets/viewers.csv") %>% 
-  janitor::clean_names()
+```
 
+```{r}
+#anti_join(gbbo_results, gbbo_bakers, by=c("baker", "series"))
+
+gbbo_df = 
+  right_join(gbbo_bakes, gbbo_results, by=c("baker", "series", "episode")) %>% 
+  right_join(gbbo_bakers, by = c("baker", "series")) %>% 
+  filter(
+    !is.na(result)
+  )
+
+gbbo_df
+
+write_csv(gbbo_df, file="data/gbb_datasets/final_gbbo_df.csv")
+```
+
+
+
+* The data cleaning process:
+  - I noticed that the gbbo_bakers dataset about the bakers had their full name, but all of the other files only had a first name, so I separated the full name into two fields ("baker" which was the their first name, and "baker_last_name")
+  - There were multiple versions of missing data: "N/A", "Unknown", "NA", and "UNKNOWN" for gbbo_bakes.
+  - There were two rows at the top of the csv for gbbo_results which affected the read_csv function, so I skipped those two rows.
+  - When doing the `anti_join` function, I saw that Jo Wheatley of season 2 was referred as "Jo" and Josephine in gbbo_bakes and gbbo_results, so I replaced those with Jo so it would join easily.
+  - I noticed that there was no data in gbbo_bakes past season 8 (missing seasons 9 and 10), so I wonder what happened to the dishes on those seasons, but there were bakers and results for those seasons so I ended up including them anyways. 
+  - I was also wondering why there were some bakers whose technical placing was missing.
+  - I joined the tables using the gbbo_results as the base table based on the first name and the season of the bakers. There were multiple bakers with the same name, but none on the same season.
+  - I also dropped all rows that had NA in the result column because those weeks were after the bakers were eliminated and provided no additional information. 
+* The final dataset has `r gbbo_df %>% count()` rows, with each row being how a baker did for a single episode, including the dishes they made, their placing in the technical challenge, and the ultimate results from that week/episode. The demographic information (age, job, hometown) were repeated for each episode the baker was on and were less important so they were all in the later columns of the final dataset.
+
+* Here is the reader-friendly table of the winners and star bakers of each episode and season. 
+* Most of the winners were predictable, being star bakers for 3-4 episodes before winning it all. There were, however, a few surprises
+  1. Richard of Season 5: he was star baker 5(!!) times, but did not win overall. 
+  2. Steph of Season 10: they were star baker 4 times but also did not win overall.
+  3. Most impressively, was David of Season 10: he was only star baker once and won it overall. 
+
+```{r}
+gbbo_winners =
+  gbbo_df %>% 
+    filter(
+      series >= 5,
+      result == "STAR BAKER" | result == "WINNER"
+    )
+
+gbbo_winners
+
+gbbo_winners %>% 
+  count(series, baker) %>% 
+  arrange(desc(n)) %>% 
+  mutate(
+    winner = ifelse(baker %in% pull(gbbo_winners %>% filter (result == "WINNER") %>% select(baker)), 1, 0)
+  )
 ```
 
