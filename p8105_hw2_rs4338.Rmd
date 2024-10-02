@@ -46,7 +46,7 @@ nyc_transit_df = read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
     vending = ifelse(vending == "YES", 1, 0)
   )
 
-nyc_transit_df
+knitr::kable(head(nyc_transit_df))
 ```
 
 * Answer the following questions:
@@ -161,10 +161,6 @@ gbbo_results = read_csv("data/gbb_datasets/results.csv",
   mutate(
     baker = replace(baker, baker == "Joanne", "Jo")
   )
-
-gbbo_viewers = read_csv("data/gbb_datasets/viewers.csv", show_col_types = FALSE) %>% 
-  janitor::clean_names()
-
 ```
 
 ```{r}
@@ -209,7 +205,8 @@ gbbo_winners =
       result == "STAR BAKER" | result == "WINNER"
     )
 
-gbbo_winners
+knitr::kable(head(gbbo_winners, 5))
+
 
 gbbo_winners %>% 
   count(series, baker) %>% 
@@ -219,3 +216,27 @@ gbbo_winners %>%
   )
 ```
 
+```{r}
+gbbo_viewers = read_csv("data/gbb_datasets/viewers.csv", show_col_types = FALSE) %>% 
+  janitor::clean_names() 
+
+cleaned_gbbo_viewers =
+  gbbo_viewers %>% 
+  pivot_longer(
+    series_1:series_10,
+    names_to = "series",
+    values_to = "viewers",
+    names_prefix = "series_"
+  ) %>% 
+  relocate(series) %>% 
+  mutate(
+    series = as.numeric(series)
+  ) %>% 
+  arrange(series, episode)
+
+knitr::kable(head(cleaned_gbbo_viewers, 10))
+```
+
+* The dataset is missing a few entries in season 1 (episodes 7-10) and season 2 (episodes 9 and 10). 
+* The average viewership in season 1 was `r cleaned_gbbo_viewers %>% filter(series == 1) %>% summarize(Mean = mean(viewers, na.rm=TRUE))`
+* The average viewership in season 5 was `r cleaned_gbbo_viewers %>% filter(series == 5) %>% summarize(Mean = mean(viewers, na.rm=TRUE))`
